@@ -1,3 +1,35 @@
+/**
+ * Flagship Play Gap Mapper — analysis resource
+ *
+ * @rote-frontmatter
+ * ---
+ * name: flagship-play-gap-mapper-analyze
+ * version: 0.1.0
+ * description: Internal analysis resource for the Flagship Play Gap Mapper.
+ * provenance:
+ *   author: Hackathon team
+ * source: https://github.com/wemakedevs/rote
+ * metadata:
+ *   rote_version: 0.78.0
+ *   version: 0.1.0
+ *   status: released
+ *   kind: atomic
+ *   flow_type: sequential
+ *   execution_model: steps_with_presentation
+ *   format: typescript
+ *   requires_endpoints: []
+ *   requires_sessions: false
+ *   contract:
+ *     atomic: true
+ *     input:
+ *       type: none
+ *     output:
+ *       format: json
+ *       destination: stdout
+ *     composable: true
+ * ---
+ */
+
 type RegistryPlay = { reference: string; title: string; description: string; tags: string[] };
 type Criterion = { score: number; max: number; evidence: string[] };
 type StrategyProfile = {
@@ -137,15 +169,67 @@ function makeCandidates(profile: StrategyProfile, overlap: ReturnType<typeof ove
 }
 
 function parseRegistry(value: unknown): RegistryPlay[] {
-  const rows = Array.isArray(value) ? value : typeof value === "object" && value !== null && Array.isArray((value as { items?: unknown[] }).items) ? (value as { items: unknown[] }).items : [];
+  const isRecord = (input: unknown): input is Record<string, unknown> =>
+    typeof input === "object" && input !== null;
+
+  const root = isRecord(value) ? value : null;
+  const data = root && isRecord(root.data) ? root.data : null;
+  const result = data && isRecord(data.result) ? data.result : null;
+
+  const rows =
+    Array.isArray(value) ? value :
+    root && Array.isArray(root.items) ? root.items :
+    result && Array.isArray(result.items) ? result.items :
+    [];
+
   return rows.flatMap((row): RegistryPlay[] => {
-    if (typeof row !== "object" || row === null) return [];
-    const item = row as Record<string, unknown>;
-    const reference = [item.reference, item.uri, item.id, item.name].find((value) => typeof value === "string");
-    return typeof reference === "string" ? [{ reference, title: typeof item.title === "string" ? item.title : reference, description: typeof item.description === "string" ? item.description : "", tags: Array.isArray(item.tags) ? item.tags.filter((tag): tag is string => typeof tag === "string") : [] }] : [];
+    if (!isRecord(row)) return [];
+
+    const item = row;
+
+    const referenceCandidates = [
+      item.reference,
+      item.uri,
+      item.play_uri,
+      item.playId,
+      item.play_id,
+      item.id,
+      item.name,
+    ];
+
+    const reference = referenceCandidates.find(
+      (value): value is string =>
+        typeof value === "string" && value.trim().length > 0,
+    );
+
+    if (!reference) return [];
+
+    const description =
+      typeof item.description === "string"
+        ? item.description
+        : "";
+
+    const title =
+      typeof item.title === "string"
+        ? item.title
+        : typeof item.name === "string"
+          ? item.name
+          : reference;
+
+    const tags = Array.isArray(item.tags)
+      ? item.tags.filter(
+          (tag): tag is string => typeof tag === "string",
+        )
+      : [];
+
+    return [{
+      reference,
+      title,
+      description,
+      tags,
+    }];
   });
 }
-
 async function registrySearch(terms: string[], limit: number): Promise<RegistryPlay[]> {
   const responses = await Promise.all(terms.slice(0, 3).map(async (term) => {
     const result = await new Deno.Command("rote", { args: ["play", "search", term, "--source", "registry", "--scope", "public", "--limit", String(limit), "--json"], stdout: "piped", stderr: "piped" }).output();
