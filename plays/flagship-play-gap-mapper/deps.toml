@@ -1,0 +1,21 @@
+schema_version = 1
+
+[[tools]]
+id = "deno"
+command = "deno"
+required = true
+version_requirement = ">=2.0"
+
+[[tools.install]]
+manager = "brew"
+package = "deno"
+
+[[tools]]
+id = "rote"
+command = "rote"
+required = true
+version_requirement = ">=0.78"
+
+[[tools.install]]
+manager = "brew"
+package = "rote"

@@ -1,0 +1,16 @@
+{
+  "items": [
+    {
+      "reference": "sakshamsai26/test-gap-mapper",
+      "title": "Test Gap Mapper",
+      "description": "Find missing test coverage in a codebase.",
+      "tags": ["testing", "analysis"]
+    },
+    {
+      "reference": "demo/hackathon-storyboard",
+      "title": "Hackathon Storyboard",
+      "description": "Draft a concise demo narrative from product notes.",
+      "tags": ["hackathon", "demo"]
+    }
+  ]
+}
