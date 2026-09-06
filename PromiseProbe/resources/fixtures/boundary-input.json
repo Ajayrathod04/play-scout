@@ -1,5 +1,0 @@
-{
-  "case": "boundary",
-  "input": "boundary",
-  "output": "RESULT_READY ADAPTED BOUNDARY_HANDLED"
-}
