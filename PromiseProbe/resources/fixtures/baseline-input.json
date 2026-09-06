@@ -1,0 +1,5 @@
+{
+  "case": "baseline",
+  "input": "normal",
+  "output": "RESULT_READY ADAPTED BOUNDARY_HANDLED"
+}
